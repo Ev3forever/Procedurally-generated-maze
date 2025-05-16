@@ -61,21 +61,23 @@ func tile_gen(wid, hei):
 func end_checks(number):
 	return number > 0
 
-func check_neighbors(currentx, currenty):
+func path_gen(crntx, crnty):
 	var Ncheck = -width
 	var Echeck = 1
 	var Scheck = width
 	var Wcheck = -1
+	visited[crntx + (crnty * width) + 1]
 	print('neighbors')
-	#while map == true:
-	for i in 128:
-		if currentx == 0:
-			currentx = 1
-		if currenty == 0:
-			currenty = 1
-		var offset = currentx + (currenty * width) + 1
+	if crntx <= 0:
+		crntx = 1
+	if crnty <= 0:
+		crnty = 1
+	
+	for I in 128:
+		neighbors.clear()
+		var offset = crntx + (crnty * width) + 1
 		visited[offset] = 0
-		Maze.set_cell(Vector2i(currentx, currenty), 15, Vector2i(0, 0), 0)
+		Maze.set_cell(Vector2i(crntx, crnty), 15, Vector2i(0, 0), 0)
 		
 		if visited[offset + Ncheck] > 0:
 			neighbors.push_back(Ncheck)
@@ -85,50 +87,32 @@ func check_neighbors(currentx, currenty):
 			neighbors.push_back(Scheck)
 		if visited[offset + Wcheck] > 0:
 			neighbors.push_back(Wcheck)
-		
+	
+		if neighbors.is_empty() == true:
+			if path.back() == Ncheck:
+				crnty -= 1
+			if path.back() == Echeck:
+				crntx += 1
+			if path.back() == Scheck:
+				crnty += 1
+			if path.back() == Wcheck:
+				crntx -= 1
+			path.pop_back()
+	
 		if neighbors.is_empty() == false:
-			selected = neighbors.pick_random()
-			path.push_back(selected)
-			if selected == Ncheck:
-				currenty -= 1
-			if selected == Echeck:
-				currentx += 1
-			if selected == Scheck:
-				currenty += 1
-			if selected == Wcheck:
-				currentx -= 1
-		
-		while neighbors.is_empty() == true:
-			if path.back() == Ncheck or path.back() == Scheck:
-				currenty -= path.back()
-				path.pop_back()
-			if path.back() == Echeck or path.back() == Wcheck:
-				currentx -= path.back()
-				path.pop_back()
-			
-			print(neighbors)
-			offset = currentx + (currenty * width) + 1
-			
-			if visited[offset + Ncheck] > 0:
-				neighbors.push_back(Ncheck)
-			if visited[offset + Echeck] > 0:
-				neighbors.push_back(Echeck)
-			if visited[offset + Scheck] > 0:
-				neighbors.push_back(Scheck)
-			if visited[offset + Wcheck] > 0:
-				neighbors.push_back(Wcheck)
-			print(neighbors)
-		
-		#if visited.has(end_checks(0)) == true:
-			#map = false
-		
+			path.push_back(neighbors.pick_random())
+			if neighbors.pick_random() == Ncheck:
+				crnty -= 1
+			if neighbors.pick_random() == Echeck:
+				crntx += 1
+			if neighbors.pick_random() == Scheck:
+				crnty += 1
+			if neighbors.pick_random() == Wcheck:
+				crntx -= 1
 		print(neighbors)
-		neighbors.clear()
-	print(currentx)
-	print(currenty)
-	print(selected)
+	print(crntx, crnty)
 	print(path)
 
 func _ready():
 	tile_gen(width, height)
-	check_neighbors(1, 1)
+	path_gen(1, 1)
