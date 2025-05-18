@@ -10,6 +10,7 @@ var path = []
 var neighbors = []
 var selected
 
+@export var tile_state : Dictionary[int, bool]
 @onready var Maze: TileMapLayer = $TileMapLayer/maze_floor
 
 #generate tile array
@@ -58,15 +59,13 @@ func tile_gen(wid, hei):
 		y += 1
 		x = 0
 
-func end_checks(number):
-	return number > 0
-
 func path_gen(crntx, crnty):
 	var Ncheck = -width
 	var Echeck = 1
 	var Scheck = width
 	var Wcheck = -1
-	visited[crntx + (crnty * width) + 1]
+	var selected
+	visited[crntx + (crnty * width)] = 0
 	print('neighbors')
 	if crntx <= 0:
 		crntx = 1
@@ -75,42 +74,55 @@ func path_gen(crntx, crnty):
 	
 	for I in 128:
 		neighbors.clear()
-		var offset = crntx + (crnty * width) + 1
+		var offset = crntx + (crnty * width)
 		visited[offset] = 0
 		Maze.set_cell(Vector2i(crntx, crnty), 15, Vector2i(0, 0), 0)
-		
+		#neighbor checking
 		if visited[offset + Ncheck] > 0:
-			neighbors.push_back(Ncheck)
+				neighbors.push_back(Ncheck)
+				print('Ncheck')
 		if visited[offset + Echeck] > 0:
-			neighbors.push_back(Echeck)
+				neighbors.push_back(Echeck)
+				print('Echeck')
 		if visited[offset + Scheck] > 0:
-			neighbors.push_back(Scheck)
+				neighbors.push_back(Scheck)
+				print('Scheck')
 		if visited[offset + Wcheck] > 0:
-			neighbors.push_back(Wcheck)
-	
+				neighbors.push_back(Wcheck)
+				print('Wcheck')
+				
+		#back track
 		if neighbors.is_empty() == true:
 			if path.back() == Ncheck:
-				crnty -= 1
+				crnty += 1
 			if path.back() == Echeck:
-				crntx += 1
+				crntx -= 1
 			if path.back() == Scheck:
-				crnty += 1
-			if path.back() == Wcheck:
-				crntx -= 1
-			path.pop_back()
-	
-		if neighbors.is_empty() == false:
-			path.push_back(neighbors.pick_random())
-			if neighbors.pick_random() == Ncheck:
 				crnty -= 1
-			if neighbors.pick_random() == Echeck:
+			if path.back() == Wcheck:
 				crntx += 1
-			if neighbors.pick_random() == Scheck:
+			path.pop_back()
+		#succesful checks
+		if neighbors.is_empty() == false:
+			selected = neighbors.pick_random()
+			path.push_back(selected)
+			if selected == Ncheck:
+				crnty -= 1
+			if selected == Echeck:
+				crntx += 1
+			if selected == Scheck:
 				crnty += 1
-			if neighbors.pick_random() == Wcheck:
+			if selected == Wcheck:
 				crntx -= 1
+		
+		print(crntx,",", crnty)
 		print(neighbors)
-	print(crntx, crnty)
+		
+		if crntx <= 0 or crntx >= width:
+			print('X fucked')
+		if crnty <= 0 or crnty >= width:
+			print('Y fucked')
+		
 	print(path)
 
 func _ready():
