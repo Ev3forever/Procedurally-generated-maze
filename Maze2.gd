@@ -4,11 +4,21 @@ extends Node
 var map: bool = true
 const width = 16
 const height = 16
+var Ncheck = -width
+var Echeck = 1
+var Scheck = width
+var Wcheck = -1
+var N = 1
+var E = 2
+var S = 4
+var W = 8
 var visited = []
 var tiles = []
 var path = []
 var neighbors = []
 var selected
+var state = 15
+var id = 0
 
 @export var tile_state : Dictionary[int, bool]
 @onready var Maze: TileMapLayer = $TileMapLayer/maze_floor
@@ -17,7 +27,7 @@ var selected
 func tile_gen(wid, hei):
 	var id = 0
 	for i in (wid*hei):
-		tiles.push_back(id)
+		tiles.push_back(15)
 		id += 1
 	print('tile set id')
 	print(tiles)
@@ -25,8 +35,7 @@ func tile_gen(wid, hei):
 	var edge = 0
 	id = 1
 	for i in (wid*hei):
-		visited.push_back(id)
-		id += 1
+		visited.push_back(1)
 	
 	for i in wid:
 		visited[edge] = 0
@@ -51,7 +60,7 @@ func tile_gen(wid, hei):
 		for o in wid:
 			var check = visited[id]
 			if check > 0:
-				Maze.set_cell(Vector2i(x, y), 0, Vector2i(0, 0), 0)
+				Maze.set_cell(Vector2i(x, y), 15, Vector2i(0, 0), 0)
 			else:
 				Maze.set_cell(Vector2i(x,y), 16, Vector2i(0,0), 0)
 			x += 1
@@ -59,70 +68,72 @@ func tile_gen(wid, hei):
 		y += 1
 		x = 0
 
-func path_gen(crntx, crnty):
-	var Ncheck = -width
-	var Echeck = 1
-	var Scheck = width
-	var Wcheck = -1
+func crntpos(x, y):
+	return x + (y * width)
+
+func check_neighbors(crntpos):
+	if visited[crntpos + Ncheck] > 0:
+		neighbors.push_back(Ncheck)
+	if visited[crntpos + Echeck] > 0:
+		neighbors.push_back(Echeck)
+	if visited[crntpos + Scheck] > 0:
+		neighbors.push_back(Scheck)
+	if visited[crntpos + Wcheck] > 0:
+		neighbors.push_back(Wcheck)
+
+func end_loop(number):
+	return number > 0
+
+func path_gen(cx, cy):
 	var selected
-	visited[crntx + (crnty * width)] = 0
-	print('neighbors')
-	if crntx <= 0:
-		crntx = 1
-	if crnty <= 0:
-		crnty = 1
+	if cx <= 0:
+		cx = 1
+	if cx >= width - 1:
+		cx = width - 2
+	if cy <= 0:
+		cy = 1
+	if cy >= height - 1:
+		cy = height - 2
 	
-	for I in 128:
+	for i in 256:
+		state = tiles[crntpos(cx, cy)]
 		neighbors.clear()
-		var offset = crntx + (crnty * width)
-		visited[offset] = 0
-		Maze.set_cell(Vector2i(crntx, crnty), 15, Vector2i(0, 0), 0)
-		#neighbor checking
-		if visited[offset + Ncheck] > 0:
-				neighbors.push_back(Ncheck)
-				print('Ncheck')
-		if visited[offset + Echeck] > 0:
-				neighbors.push_back(Echeck)
-				print('Echeck')
-		if visited[offset + Scheck] > 0:
-				neighbors.push_back(Scheck)
-				print('Scheck')
-		if visited[offset + Wcheck] > 0:
-				neighbors.push_back(Wcheck)
-				print('Wcheck')
-				
+		visited[crntpos(cx, cy)] = 0
+		check_neighbors(crntpos(cx, cy))
 		#back track
 		if neighbors.is_empty() == true:
 			if path.back() == Ncheck:
-				crnty += 1
+				cy += 1
 			if path.back() == Echeck:
-				crntx -= 1
+				cx -= 1
 			if path.back() == Scheck:
-				crnty -= 1
+				cy -= 1
 			if path.back() == Wcheck:
-				crntx += 1
+				cx += 1
 			path.pop_back()
 		#succesful checks
 		if neighbors.is_empty() == false:
 			selected = neighbors.pick_random()
 			path.push_back(selected)
 			if selected == Ncheck:
-				crnty -= 1
+				cy -= 1
+				state -= N
 			if selected == Echeck:
-				crntx += 1
+				cx += 1
+				state -= E
 			if selected == Scheck:
-				crnty += 1
+				cy += 1
+				state -= S
 			if selected == Wcheck:
-				crntx -= 1
-		
-		print(crntx,",", crnty)
+				cx -= 1
+				state -= W
+		Maze.set_cell(Vector2i(cx, cy), state, Vector2i(0, 0), 0)
+		print(cx,",", cy)
 		print(neighbors)
-		
-		if crntx <= 0 or crntx >= width:
+		if cx <= 0 or cx >= width:
 			print('X fucked')
-		if crnty <= 0 or crnty >= width:
+		if cy <= 0 or cy >= width:
 			print('Y fucked')
-		
 	print(path)
 
 func _ready():
