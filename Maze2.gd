@@ -8,19 +8,17 @@ var Ncheck = -width
 var Echeck = 1
 var Scheck = width
 var Wcheck = -1
-var N = 1
-var E = 2
-var S = 4
-var W = 8
+var chnx: int
+var chny: int
 var visited = []
 var tiles = []
 var path = []
 var neighbors = []
 var selected
-var state = 15
+var state
+var stateprev = 0
 var id = 0
 
-@export var tile_state : Dictionary[int, bool]
 @onready var Maze: TileMapLayer = $TileMapLayer/maze_floor
 
 #generate tile array
@@ -60,7 +58,7 @@ func tile_gen(wid, hei):
 		for o in wid:
 			var check = visited[id]
 			if check > 0:
-				Maze.set_cell(Vector2i(x, y), 15, Vector2i(0, 0), 0)
+				Maze.set_cell(Vector2i(x, y), 16, Vector2i(0, 0), 0)
 			else:
 				Maze.set_cell(Vector2i(x,y), 16, Vector2i(0,0), 0)
 			x += 1
@@ -84,6 +82,31 @@ func check_neighbors(crntpos):
 func end_loop(number):
 	return number > 0
 
+func tile_state(selected, cx, cy):
+	state = tiles[crntpos(cx, cy)]
+	if selected == Ncheck:
+		state -= 1
+	if selected == Echeck:
+		state -= 2
+	if selected == Scheck:
+		state -= 4
+	if selected == Wcheck:
+		state -= 8
+	state += stateprev
+	
+	Maze.set_cell(Vector2i(cx, cy), (state), Vector2i(0, 0), 0)
+	tiles[crntpos(cx, cy)] = (state)
+	stateprev = 0
+	
+	if selected == Ncheck:
+		stateprev -= 4
+	if selected == Echeck:
+		stateprev -= 8
+	if selected == Scheck:
+		stateprev -= 1
+	if selected == Wcheck:
+		stateprev -= 2
+
 func path_gen(cx, cy):
 	var selected
 	if cx <= 0:
@@ -94,8 +117,9 @@ func path_gen(cx, cy):
 		cy = 1
 	if cy >= height - 1:
 		cy = height - 2
+	Maze.set_cell(Vector2i(cx, cy), 0, Vector2i(0, 0), 0)
 	
-	for i in 256:
+	for i in (width*height)*2:
 		state = tiles[crntpos(cx, cy)]
 		neighbors.clear()
 		visited[crntpos(cx, cy)] = 0
@@ -103,37 +127,37 @@ func path_gen(cx, cy):
 		#back track
 		if neighbors.is_empty() == true:
 			if path.back() == Ncheck:
-				cy += 1
+				chny = +1
 			if path.back() == Echeck:
-				cx -= 1
+				chnx = -1
 			if path.back() == Scheck:
-				cy -= 1
+				chny = -1
 			if path.back() == Wcheck:
-				cx += 1
+				chnx = +1
 			path.pop_back()
 		#succesful checks
 		if neighbors.is_empty() == false:
 			selected = neighbors.pick_random()
 			path.push_back(selected)
 			if selected == Ncheck:
-				cy -= 1
-				state -= N
+				chny = -1
 			if selected == Echeck:
-				cx += 1
-				state -= E
+				chnx = +1
 			if selected == Scheck:
-				cy += 1
-				state -= S
+				chny = +1
 			if selected == Wcheck:
-				cx -= 1
-				state -= W
-		Maze.set_cell(Vector2i(cx, cy), state, Vector2i(0, 0), 0)
+				chnx = -1
+			tile_state(selected, cx, cy)
+		cx += chnx
+		cy += chny
+		chnx = 0
+		chny = 0
 		print(cx,",", cy)
 		print(neighbors)
 		if cx <= 0 or cx >= width:
-			print('X fucked')
+			print('X')
 		if cy <= 0 or cy >= width:
-			print('Y fucked')
+			print('Y')
 	print(path)
 
 func _ready():
